@@ -63,7 +63,7 @@ Vertical layout fills a column top-to-bottom, then moves right. Horizontal fills
 
 **Implementation:**
 
-- Similar to column display but filled rows left-to-right.  
+- Similar to column display but fills rows left-to-right.  
 - Tracked current horizontal position to wrap lines when exceeding terminal width.  
 
 **Report Questions:**
@@ -83,12 +83,6 @@ Vertical layout prioritizes column-first; horizontal prioritizes row-first.
 - Read all directory entries into a dynamic array (`char **names`).  
 - Sorted using `qsort()` with a comparison function:
 
-```c
-static int cmpstring(const void *a, const void *b) {
-    const char *sa = *(const char **)a;
-    const char *sb = *(const char **)b;
-    return strcmp(sa, sb);
-}
 Report Questions:
 
 Why read all entries before sorting?
@@ -101,6 +95,7 @@ Purpose of qsort() comparison function:
 qsort sorts arbitrary data; const void * allows generic pointers. Cast to char ** for string comparison.
 
 v1.5.0 – Colorized Output
+
 Implementation:
 
 Used lstat() to determine file type.
@@ -112,7 +107,7 @@ Directory	Blue	\033[0;34m
 Executable	Green	\033[0;32m
 Tarballs (.tar/.gz/.zip)	Red	\033[0;31m
 Symbolic links	Pink	\033[0;35m
-Special files	Reverse video	\033[7m
+Special files (device, socket)	Reverse video	\033[7m
 
 Reset color after each filename: \033[0m.
 
@@ -123,13 +118,14 @@ Special character sequences sent to the terminal; modify foreground/background c
 
 Example green:
 
-c
-Copy code
 printf("\033[0;32m%s\033[0m", filename);
+
+
 Which bits determine executable?
 Check st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) for owner, group, or other execute permissions.
 
 v1.6.0 – Recursive Listing (-R)
+
 Implementation:
 
 Added -R option in getopt() loop.
@@ -142,40 +138,43 @@ Read & sort entries
 
 Display entries
 
-For each directory (excluding . and ..), construct full path and recursively call do_ls().
+For each directory (excluding . and ..), construct full path and recursively call do_ls()
 
 Report Questions:
 
 What is a base case?
 The recursion stops when a directory contains no subdirectories or entries.
 
-Why full path is essential?
-Without full path, do_ls("subdir") may fail if current working directory changes; relative path might not resolve correctly.
+Why is full path essential?
+Without full path, do_ls("subdir") may fail if the current working directory changes; relative path might not resolve correctly.
 
 Memory Management
+
 Dynamic arrays used: names = malloc()/realloc().
 
 Each string duplicated: strdup().
 
 Freed after use:
 
-c
-Copy code
 for (int i = 0; i < count; i++) free(names[i]);
 free(names);
+
 Git Workflow
+
 Feature-per-branch approach:
 
-arduino
-Copy code
 feature-long-listing-v1.1.0
 feature-column-display-v1.2.0
 feature-horizontal-display-v1.3.0
 feature-alphabetical-sort-v1.4.0
 feature-colorized-output-v1.5.0
 feature-recursive-listing-v1.6.0
+
+
 Each branch committed individually.
 
 Merged sequentially into main.
 
 Tags created per version: v1.1.0 → v1.6.0.
+
+
