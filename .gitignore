@@ -1,0 +1,10 @@
+bin/
+obj/
+*.o
+*.tar.gz
+*.zip
+bin/
+obj/
+*.o
+*.tar.gz
+*.zip
