@@ -1,20 +1,19 @@
 /*
- * Programming Assignment 02: lsv1.4.0
- * Add column display (default), long listing (-l), horizontal display (-x),
- * and alphabetical sort to ls.
+ * Programming Assignment 02: lsv1.3.0
+ * Add column display (default), long listing (-l), and horizontal display (-x) to ls.
  *
  * Usage:
- *   $ lsv1.4.0
- *   $ lsv1.4.0 -l
- *   $ lsv1.4.0 -x
- *   $ lsv1.4.0 /home /etc
- *   $ lsv1.4.0 -l /etc /home
- *   $ lsv1.4.0 -x /etc
+ *   $ lsv1.3.0
+ *   $ lsv1.3.0 -l
+ *   $ lsv1.3.0 -x
+ *   $ lsv1.3.0 /home /etc
+ *   $ lsv1.3.0 -l /etc /home
+ *   $ lsv1.3.0 -x /etc
  *
  * Notes:
- * - Default (no -l or -x): shows column layout, “down then across” in alphabetical order.
- * - -l: shows full long listing (permissions, owner, group, size, date) in alphabetical order.
- * - -x: shows horizontal layout (left to right, wraps to next line if needed) in alphabetical order.
+ * - Default (no -l or -x): shows column layout, “down then across”.
+ * - -l: shows full long listing (permissions, owner, group, size, date).
+ * - -x: shows horizontal layout (left to right, wraps to next line if needed).
  */
 
 #include <stdio.h>
@@ -39,14 +38,6 @@ static void mode_to_string(mode_t mode, char *str);
 static void print_long(const char *dir, const char *name, int width_links, int width_user, int width_group, int width_size);
 static void print_vertical(char **names, int count, int maxlen);
 static void print_horizontal(char **names, int count, int maxlen);
-
-/* ────────────── Step 2: Comparison function for qsort ────────────── */
-static int cmpstring(const void *a, const void *b)
-{
-    const char *sa = *(const char **)a;
-    const char *sb = *(const char **)b;
-    return strcmp(sa, sb);
-}
 
 enum display_mode { DEFAULT, LONG, HORIZONTAL };
 
@@ -128,9 +119,6 @@ void do_ls(const char *dir, int mode)
         free(names);
         return;
     }
-
-    /* ────────────── Step 3: Sort filenames alphabetically ────────────── */
-    qsort(names, count, sizeof(char *), cmpstring);
 
     switch (mode)
     {
