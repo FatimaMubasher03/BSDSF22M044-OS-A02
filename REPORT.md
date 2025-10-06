@@ -1,142 +1,135 @@
-REPORT.md – Programming Assignment 02: LS Project
+# REPORT.md – Programming Assignment 02: LS Project
 
-Student: Fatima Mubasher
-Instructor: Dr. Muhammad Arif Butt, PhD
-Course: Operating System
+**Student:** Fatima Mubasher  
+**Instructor:** Dr. Muhammad Arif Butt, PhD  
+**Course:** Operating System  
 
-Project Overview
+---
 
-This project implements a custom version of the ls command in C with multiple features developed iteratively:
+## Project Overview
 
-Version	Feature	Description
-v1.1.0	Long Listing (-l)	Display file metadata including permissions, owner, group, size, and modification time.
-v1.2.0	Column Display	Default display in columns (“down then across”) adjusted to terminal width.
-v1.3.0	Horizontal Display (-x)	Left-to-right horizontal display wrapping to the next line as needed.
-v1.4.0	Alphabetical Sort	Sort directory entries alphabetically before displaying.
-v1.5.0	Colorized Output	Print filenames in color based on file type using ANSI escape codes.
-v1.6.0	Recursive Listing (-R)	Recursively list subdirectories using the -R option.
-Feature-wise Implementation & Report Questions
-v1.1.0 – Long Listing (-l)
+This project implements a custom version of the `ls` command in C with multiple features developed iteratively:
 
-Implementation:
+| Version  | Feature                 | Description                                                                 |
+|----------|------------------------|-----------------------------------------------------------------------------|
+| v1.1.0   | Long Listing (-l)       | Display file metadata including permissions, owner, group, size, and modification time. |
+| v1.2.0   | Column Display          | Default display in columns (“down then across”) adjusted to terminal width. |
+| v1.3.0   | Horizontal Display (-x) | Left-to-right horizontal display wrapping to the next line as needed.       |
+| v1.4.0   | Alphabetical Sort       | Sort directory entries alphabetically before displaying.                     |
+| v1.5.0   | Colorized Output        | Print filenames in color based on file type using ANSI escape codes.        |
+| v1.6.0   | Recursive Listing (-R)  | Recursively list subdirectories using the `-R` option.                      |
 
-Used lstat() to get file metadata: st_mode, st_uid, st_gid, st_size, st_mtime.
+---
 
-Converted st_mode to string representation of permissions using mode_to_string().
+## Feature-wise Implementation & Report Questions
 
-Resolved UID/GID to user and group names using getpwuid() and getgrgid().
+### v1.1.0 – Long Listing (-l)
 
-Report Questions:
+**Implementation:**
 
-How is stat() used to get file metadata?
+- Used `lstat()` to get file metadata: `st_mode`, `st_uid`, `st_gid`, `st_size`, `st_mtime`.  
+- Converted `st_mode` to string representation of permissions using `mode_to_string()`.  
+- Resolved UID/GID to user and group names using `getpwuid()` and `getgrgid()`.  
 
-lstat() fills a struct stat with all necessary info: file type, permissions, links, size, and timestamps.
+**Report Questions:**
 
-How are permissions displayed?
+**How is `stat()` used to get file metadata?**  
+`lstat()` fills a `struct stat` with all necessary info: file type, permissions, links, size, and timestamps.
 
-Using bitwise operations on st_mode to map bits to rwx characters.
+**How are permissions displayed?**  
+Using bitwise operations on `st_mode` to map bits to `rwx` characters.
 
-v1.2.0 – Column Display
+---
 
-Implementation:
+### v1.2.0 – Column Display
 
-Determined terminal width using ioctl() and TIOCGWINSZ.
+**Implementation:**
 
-Calculated column width based on longest filename + spacing.
+- Determined terminal width using `ioctl()` and `TIOCGWINSZ`.  
+- Calculated column width based on longest filename + spacing.  
+- Displayed files “down then across” by calculating rows and columns.  
 
-Displayed files “down then across” by calculating rows and columns.
+**Report Questions:**
 
-Report Questions:
+**How does terminal width affect column layout?**  
+The number of columns is `term_width / col_width`. Too few columns wrap entries vertically.
 
-How does terminal width affect column layout?
-
-The number of columns is term_width / col_width. Too few columns wrap entries vertically.
-
-Difference from horizontal display:
-
+**Difference from horizontal display:**  
 Vertical layout fills a column top-to-bottom, then moves right. Horizontal fills left-to-right and wraps.
 
-v1.3.0 – Horizontal Display (-x)
+---
 
-Implementation:
+### v1.3.0 – Horizontal Display (-x)
 
-Similar to column display but filled rows left-to-right.
+**Implementation:**
 
-Tracked current horizontal position to wrap lines when exceeding terminal width.
+- Similar to column display but filled rows left-to-right.  
+- Tracked current horizontal position to wrap lines when exceeding terminal width.  
 
-Report Questions:
+**Report Questions:**
 
-Why is tracking horizontal position important?
-
+**Why is tracking horizontal position important?**  
 Ensures proper wrapping and avoids line overflow.
 
-How is it different from default vertical columns?
-
+**How is it different from default vertical columns?**  
 Vertical layout prioritizes column-first; horizontal prioritizes row-first.
 
-v1.4.0 – Alphabetical Sort
+---
 
-Implementation:
+### v1.4.0 – Alphabetical Sort
 
-Read all directory entries into a dynamic array (char **names).
+**Implementation:**
 
-Sorted using qsort() with a comparison function:
+- Read all directory entries into a dynamic array (`char **names`).  
+- Sorted using `qsort()` with a comparison function:
 
+```c
 static int cmpstring(const void *a, const void *b) {
     const char *sa = *(const char **)a;
     const char *sb = *(const char **)b;
     return strcmp(sa, sb);
 }
-
-
 Report Questions:
 
 Why read all entries before sorting?
-
 Sorting requires all items in memory to compare; streaming entries prevents sorting.
 
 Drawbacks for huge directories:
-
 High memory usage; slow malloc/realloc; potential fragmentation.
 
 Purpose of qsort() comparison function:
-
 qsort sorts arbitrary data; const void * allows generic pointers. Cast to char ** for string comparison.
 
 v1.5.0 – Colorized Output
-
 Implementation:
 
 Used lstat() to determine file type.
 
 Applied ANSI escape codes:
 
-Directory: Blue \033[0;34m
-
-Executable: Green \033[0;32m
-
-Tarballs (.tar, .gz, .zip): Red \033[0;31m
-
-Symbolic links: Pink \033[0;35m
-
-Special files: Reverse video \033[7m
+File Type	Color / Style	ANSI Code
+Directory	Blue	\033[0;34m
+Executable	Green	\033[0;32m
+Tarballs (.tar/.gz/.zip)	Red	\033[0;31m
+Symbolic links	Pink	\033[0;35m
+Special files	Reverse video	\033[7m
 
 Reset color after each filename: \033[0m.
 
 Report Questions:
 
 How do ANSI codes work?
+Special character sequences sent to the terminal; modify foreground/background color and style.
 
-Special character sequences sent to terminal; modify foreground/background and style.
+Example green:
 
-Example green: printf("\033[0;32m%s\033[0m", filename);
-
+c
+Copy code
+printf("\033[0;32m%s\033[0m", filename);
 Which bits determine executable?
-
 Check st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) for owner, group, or other execute permissions.
 
 v1.6.0 – Recursive Listing (-R)
-
 Implementation:
 
 Added -R option in getopt() loop.
@@ -154,36 +147,33 @@ For each directory (excluding . and ..), construct full path and recursively cal
 Report Questions:
 
 What is a base case?
-
 The recursion stops when a directory contains no subdirectories or entries.
 
 Why full path is essential?
-
 Without full path, do_ls("subdir") may fail if current working directory changes; relative path might not resolve correctly.
 
 Memory Management
-
-Dynamic arrays used: names = malloc/realloc().
+Dynamic arrays used: names = malloc()/realloc().
 
 Each string duplicated: strdup().
 
 Freed after use:
 
-for (int i=0;i<count;i++) free(names[i]);
+c
+Copy code
+for (int i = 0; i < count; i++) free(names[i]);
 free(names);
-
 Git Workflow
-
 Feature-per-branch approach:
 
+arduino
+Copy code
 feature-long-listing-v1.1.0
 feature-column-display-v1.2.0
 feature-horizontal-display-v1.3.0
 feature-alphabetical-sort-v1.4.0
 feature-colorized-output-v1.5.0
 feature-recursive-listing-v1.6.0
-
-
 Each branch committed individually.
 
 Merged sequentially into main.
