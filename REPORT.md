@@ -1,149 +1,191 @@
-🧩 Feature-1: Project Setup and Initial Build — v1.0.0
+REPORT.md – Programming Assignment 02: LS Project
 
-Concepts Covered:
-Git/GitHub, Project Scaffolding, Basic Makefile Usage
+Student: Fatima Mubasher
+Instructor: Dr. Muhammad Arif Butt, PhD
+Course: Operating System
 
-Implementation Summary:
-The base version ls-v1.0.0 was implemented using directory traversal functions. The project structure was created according to the assignment specifications, including src, bin, obj, and man directories, and compiled successfully using a Makefile. The executable lists all files in a directory except hidden files.
+Project Overview
 
-System Calls and Functions Used:
+This project implements a custom version of the ls command in C with multiple features developed iteratively:
 
-opendir() – Opens a directory stream.
+Version	Feature	Description
+v1.1.0	Long Listing (-l)	Display file metadata including permissions, owner, group, size, and modification time.
+v1.2.0	Column Display	Default display in columns (“down then across”) adjusted to terminal width.
+v1.3.0	Horizontal Display (-x)	Left-to-right horizontal display wrapping to the next line as needed.
+v1.4.0	Alphabetical Sort	Sort directory entries alphabetically before displaying.
+v1.5.0	Colorized Output	Print filenames in color based on file type using ANSI escape codes.
+v1.6.0	Recursive Listing (-R)	Recursively list subdirectories using the -R option.
+Feature-wise Implementation & Report Questions
+v1.1.0 – Long Listing (-l)
 
-readdir() – Reads entries from a directory.
+Implementation:
 
-closedir() – Closes the directory stream.
+Used lstat() to get file metadata: st_mode, st_uid, st_gid, st_size, st_mtime.
 
-errno – Used for error handling.
+Converted st_mode to string representation of permissions using mode_to_string().
 
-Key Behavior:
-If no argument is passed, it lists the current directory (.).
-If one or more paths are provided, it lists the contents of each directory.
+Resolved UID/GID to user and group names using getpwuid() and getgrgid().
 
-Example Usage:
+Report Questions:
 
-$ ./bin/ls
-$ ./bin/ls /home
-$ ./bin/ls /home/kali /etc
+How is stat() used to get file metadata?
 
+lstat() fills a struct stat with all necessary info: file type, permissions, links, size, and timestamps.
 
-Example Output:
+How are permissions displayed?
 
-Directory listing of /etc :
-passwd
-shadow
-hosts
-...
+Using bitwise operations on st_mode to map bits to rwx characters.
 
+v1.2.0 – Column Display
 
-Difference from Real ls:
-This version only prints file names and does not show file permissions, sizes, owners, or timestamps.
+Implementation:
 
-⚙️ Feature-2: Long Listing Format (-l) — v1.1.0
+Determined terminal width using ioctl() and TIOCGWINSZ.
 
-Concepts Covered:
-File Metadata, System Calls (stat, lstat), User/Group Resolution (getpwuid, getgrgid), Time Formatting, Command-Line Argument Parsing
+Calculated column width based on longest filename + spacing.
 
-Implementation Summary:
-Added support for the -l option to display detailed file information. When -l is passed, the program prints each file’s permissions, number of links, owner, group, size, modification time, and name — closely resembling the standard Unix ls -l output.
+Displayed files “down then across” by calculating rows and columns.
 
-System Calls and Library Functions Used:
+Report Questions:
 
-opendir(), readdir(), closedir() — directory traversal
+How does terminal width affect column layout?
 
-lstat() — retrieve file metadata without following symbolic links
+The number of columns is term_width / col_width. Too few columns wrap entries vertically.
 
-getpwuid() — get username from user ID
+Difference from horizontal display:
 
-getgrgid() — get group name from group ID
+Vertical layout fills a column top-to-bottom, then moves right. Horizontal fills left-to-right and wraps.
 
-strftime() / ctime() — format modification timestamp
+v1.3.0 – Horizontal Display (-x)
 
-Internal Logic Overview:
+Implementation:
 
-Command-line argument -l detected using getopt().
+Similar to column display but filled rows left-to-right.
 
-When -l is present → call do_ls_long() for long format.
+Tracked current horizontal position to wrap lines when exceeding terminal width.
 
-Otherwise → fallback to simple display via do_ls().
+Report Questions:
 
-For each file:
+Why is tracking horizontal position important?
 
-Use lstat() to get metadata (struct stat).
+Ensures proper wrapping and avoids line overflow.
 
-Extract file type and permission bits from st_mode.
+How is it different from default vertical columns?
 
-Resolve user/group names.
+Vertical layout prioritizes column-first; horizontal prioritizes row-first.
 
-Format and print output in aligned columns.
+v1.4.0 – Alphabetical Sort
 
-Key Difference Between v1.0.0 and v1.1.0
+Implementation:
 
-Version	Behavior
-v1.0.0	Lists only file names (simple format).
-v1.1.0	Adds support for -l, displaying file details in long format.
+Read all directory entries into a dynamic array (char **names).
 
-Example Usage:
+Sorted using qsort() with a comparison function:
 
-$ ./bin/ls -l
-$ ./bin/ls -l /etc
-
-
-Example Output (Sample):
-
--rw-r--r--  1 kali kali   2048 Oct  6 14:25 Makefile
-drwxr-xr-x  2 kali kali   4096 Oct  6 14:30 src
--rwxr-xr-x  1 kali kali  12000 Oct  6 14:35 bin/ls
-
-🧠 Report Questions
-1. What is the crucial difference between stat() and lstat()? When is lstat() more appropriate to use?
-
-stat() retrieves information about the target file, following symbolic links.
-
-lstat() retrieves information about the link itself, not the target file.
-In the context of ls, lstat() is more appropriate because it allows symbolic links to be displayed as links, rather than showing metadata of the files they point to.
-
-2. How can bitwise operators and macros be used to extract file type and permission information from st_mode?
-
-The st_mode field in struct stat is a bitmask containing file type and permission bits.
-Bitwise & operations and predefined macros are used to extract this information.
-
-Examples:
-
-if (st.st_mode & S_IFDIR)
-    printf("This is a directory\n");
-
-if (st.st_mode & S_IRUSR)
-    printf("User has read permission\n");
+static int cmpstring(const void *a, const void *b) {
+    const char *sa = *(const char **)a;
+    const char *sb = *(const char **)b;
+    return strcmp(sa, sb);
+}
 
 
-Common Macros:
+Report Questions:
 
-S_IFDIR → Directory
+Why read all entries before sorting?
 
-S_IFREG → Regular file
+Sorting requires all items in memory to compare; streaming entries prevents sorting.
 
-S_IRUSR, S_IWUSR, S_IXUSR → Owner permissions
+Drawbacks for huge directories:
 
-S_IRGRP, S_IROTH → Group/Other permissions
+High memory usage; slow malloc/realloc; potential fragmentation.
 
-✅ Version Control Summary
+Purpose of qsort() comparison function:
 
-Branching and Workflow:
+qsort sorts arbitrary data; const void * allows generic pointers. Cast to char ** for string comparison.
 
-Created feature branch:
+v1.5.0 – Colorized Output
+
+Implementation:
+
+Used lstat() to determine file type.
+
+Applied ANSI escape codes:
+
+Directory: Blue \033[0;34m
+
+Executable: Green \033[0;32m
+
+Tarballs (.tar, .gz, .zip): Red \033[0;31m
+
+Symbolic links: Pink \033[0;35m
+
+Special files: Reverse video \033[7m
+
+Reset color after each filename: \033[0m.
+
+Report Questions:
+
+How do ANSI codes work?
+
+Special character sequences sent to terminal; modify foreground/background and style.
+
+Example green: printf("\033[0;32m%s\033[0m", filename);
+
+Which bits determine executable?
+
+Check st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) for owner, group, or other execute permissions.
+
+v1.6.0 – Recursive Listing (-R)
+
+Implementation:
+
+Added -R option in getopt() loop.
+
+Modified do_ls() to:
+
+Print directory header (dirname:)
+
+Read & sort entries
+
+Display entries
+
+For each directory (excluding . and ..), construct full path and recursively call do_ls().
+
+Report Questions:
+
+What is a base case?
+
+The recursion stops when a directory contains no subdirectories or entries.
+
+Why full path is essential?
+
+Without full path, do_ls("subdir") may fail if current working directory changes; relative path might not resolve correctly.
+
+Memory Management
+
+Dynamic arrays used: names = malloc/realloc().
+
+Each string duplicated: strdup().
+
+Freed after use:
+
+for (int i=0;i<count;i++) free(names[i]);
+free(names);
+
+Git Workflow
+
+Feature-per-branch approach:
+
 feature-long-listing-v1.1.0
+feature-column-display-v1.2.0
+feature-horizontal-display-v1.3.0
+feature-alphabetical-sort-v1.4.0
+feature-colorized-output-v1.5.0
+feature-recursive-listing-v1.6.0
 
-Implemented and tested new functionality.
 
-Merged into main after verification.
+Each branch committed individually.
 
-Tag and Release:
+Merged sequentially into main.
 
-Tag created:
-v1.1.0
-
-Release created on GitHub titled:
-Version 1.1.0 — Complete Long Listing Format
-
-Uploaded compiled binary (ls) under release assets.
+Tags created per version: v1.1.0 → v1.6.0.
