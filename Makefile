@@ -14,3 +14,7 @@ $(OBJ): $(SRC)
 clean:
 	rm -f $(OBJ) $(BIN)
 
+
+# Build v1.2.0 (column + long listing)
+ls-v1.2.0: src/ls-v1.2.0.c
+	$(CC) $(CFLAGS) src/ls-v1.2.0.c -o bin/ls
