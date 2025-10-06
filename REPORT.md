@@ -94,6 +94,8 @@ High memory usage; slow malloc/realloc; potential fragmentation.
 Purpose of qsort() comparison function:
 qsort sorts arbitrary data; const void * allows generic pointers. Cast to char ** for string comparison.
 
+---
+
 v1.5.0 – Colorized Output
 
 Implementation:
@@ -123,6 +125,8 @@ printf("\033[0;32m%s\033[0m", filename);
 
 Which bits determine executable?
 Check st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) for owner, group, or other execute permissions.
+
+---
 
 v1.6.0 – Recursive Listing (-R)
 
